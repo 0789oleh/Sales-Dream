@@ -19,6 +19,10 @@ export function buildApp() {
     }
   }
 );
+  app.get('/auth/me', async (req) => {
+    return { user: req.user};
+  });
+
 
 
   return app;
