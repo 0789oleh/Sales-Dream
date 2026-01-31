@@ -5,17 +5,21 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate"
+    "db:generate:pglite": "drizzle-kit generate --config drizzle.config.pglite.ts",
+    "db:migrate:pglite": "drizzle-kit migrate --config drizzle.config.pglite.ts",
+    "db:generate:neon": "drizzle-kit generate --config drizzle.config.neon.ts",
+    "db:migrate:neon": "drizzle-kit migrate --config drizzle.config.neon.ts"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "packageManager": "pnpm@10.24.0",
   "dependencies": {
+    "@electric-sql/pglite": "^0.3.15",
     "@neondatabase/serverless": "^1.0.2",
+    "@types/better-sqlite3": "^7.6.13",
     "bcrypt": "^6.0.0",
-    "better-sqlite3": "^12.6.2",
+    "better-sqlite3": "11.7.2",
     "drizzle-orm": "^0.45.1",
     "fastify": "^5.7.2",
     "pg": "^8.17.2",
@@ -23,6 +27,7 @@
   },
   "devDependencies": {
     "@types/bcrypt": "^6.0.0",
-    "drizzle-kit": "^0.31.8"
+    "drizzle-kit": "^0.31.8",
+    "tsx": "^4.21.0"
   }
 }

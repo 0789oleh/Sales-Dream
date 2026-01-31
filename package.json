@@ -10,5 +10,8 @@
     "k8s:restart": "kubectl rollout restart deployment/crm-app",
     "k8s:status": "kubectl get pods,svc,ingress",
     "k8s:logs": "kubectl logs -l app=crm-app --tail=100 -f"
+  },
+  "dependencies": {
+    "pnpm": "^10.28.2"
   }
 }
