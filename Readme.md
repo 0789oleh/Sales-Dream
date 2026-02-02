@@ -1,5 +1,6 @@
-# Cборник анекдотов
+# Sales dream
 
+TL;DR
 Этот конфиг
 
 ```typescript
@@ -20,3 +21,21 @@ export default defineConfig({
 ```
 
 Позволяет проводить генерацию, но байдинги не дают провести миграцию. Принято решение перейти на pglite.
+
+
+
+
+### Instructions for launch (auth-service only)
+
+1. Migrations
+
+```bash
+docker run --rm   -v $(pwd)/data:/data   -e PGLITE_DIR=/data/pglite   auth-service   pnpm db:migrate:pglite
+```
+
+
+2. Launch 
+```bash
+
+docker run   -p 3000:3000   -v $(pwd)/data:/data   auth-service
+```

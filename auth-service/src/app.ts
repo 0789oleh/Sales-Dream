@@ -1,29 +1,17 @@
 import Fastify from 'fastify';
-import jwt from './plugins/jwt';
+import { jwtPlugin } from './plugins/jwt';
 import cookie from './plugins/cookie';
 import { authRoutes } from './modules/auth/auth.routes';
 
 export function buildApp() {
   const app = Fastify({ logger: true });
 
-  app.register(jwt);
+  app.register(jwtPlugin);
   app.register(cookie);
-  app.register(authRoutes);
-  app.decorate(
-  'authenticate',
-  async (req: any, reply: any) => {
-    try {
-      await req.jwtVerify();
-    } catch {
-      reply.code(401).send({ message: 'Unauthorized' });
-    }
-  }
-);
-  app.get('/auth/me', async (req) => {
-    return { user: req.user};
-  });
+  
+  app.get('/health', async () => ({ ok: true }));
 
-
+  app.register(authRoutes, { prefix: '/auth' });
 
   return app;
 }

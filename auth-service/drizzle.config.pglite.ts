@@ -6,7 +6,7 @@ export default defineConfig({
   dialect: 'postgresql',        // Use the postgresql dialect
   dbCredentials: {
     // Specify the URL for PGlite connection (e.g., a file path)
-    url: 'file://dev.db', 
+    url: '/data/pglite', 
   },
   driver: 'pglite', // Explicitly use the pglite driver for Drizzle Kit
 });
