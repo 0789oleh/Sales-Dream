@@ -2,7 +2,7 @@ import { db } from '../../db/client';
 import { users } from '../../db/schema';
 import { eq } from 'drizzle-orm';
 import { randomUUID } from 'crypto';
-import { loginResponseSchema, userResponseSchema } from './auth.schemas';
+import { loginResponseSchema, meResponseSchema, userResponseSchema } from './auth.schemas';
 import { verify } from 'argon2';
 import { AuthError } from '../errors/auth.errors';
 
@@ -59,6 +59,27 @@ export class AuthService {
     });
   }
 
+  async getMe(userId: string) {
+  const user = await this.findById(userId);
+
+    if (!user) {
+      throw new AuthError('USER_NOT_FOUND');
+    }
+
+    // Ban chack (me be added in future)
+    if (!user.isActive) {
+      throw new AuthError('USER_INACTIVE');
+    }
+    
+    return meResponseSchema.parse(user);
+  }
+
+
+  findById(userId: string) {
+    return db.query.users.findFirst({
+      where: eq(users.id, userId),
+    });
+  }
 
   async findByEmail(email: string) {
     return db.query.users.findFirst({

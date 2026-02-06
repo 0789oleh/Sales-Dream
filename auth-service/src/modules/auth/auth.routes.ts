@@ -1,4 +1,4 @@
-import { FastifyInstance } from 'fastify';
+import fastify, { FastifyInstance } from 'fastify';
 import { AuthService } from './auth.service';
 import {
   registerSchema,
@@ -6,7 +6,6 @@ import {
   loginSchema,
   loginResponseSchema,
 } from './auth.schemas';
-import * as argon2 from 'argon2';
 
 export async function authRoutes(app: FastifyInstance) {
   const service = new AuthService(app.jwt);
@@ -44,6 +43,14 @@ export async function authRoutes(app: FastifyInstance) {
       const { email, password } = req.body;
       
       return service.login(email, password);
+    },
+  });
+
+  app.get('/me', {
+    preHandler: [app.authenticate],
+    handler: async (req) => {
+      // sub — это id, который мы упаковали в токен
+      return await service.getMe(req.user.sub);
     },
   });
 }
