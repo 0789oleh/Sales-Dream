@@ -1,40 +1,50 @@
 import { FastifyInstance } from 'fastify';
 import { AuthService } from './auth.service';
-import { registerSchema, registerResponseSchema } from './auth.schemas';
-import { createHash } from 'crypto';
-import { zodToJsonSchema } from 'zod-to-json-schema';
+import {
+  registerSchema,
+  registerResponseSchema,
+  loginSchema,
+  loginResponseSchema,
+} from './auth.schemas';
+import * as argon2 from 'argon2';
 
 export async function authRoutes(app: FastifyInstance) {
-  const authService = new AuthService();
+  const service = new AuthService(app.jwt);
 
-    app.post(
-    '/register',
+  app.post(
+  '/register',
     {
       schema: {
-        body: zodToJsonSchema(registerSchema),
+        body: registerSchema,
         response: {
-          201: zodToJsonSchema(registerResponseSchema),
+          200: registerResponseSchema,
         },
       },
     },
+  
     async (req, reply) => {
+      const user = await service.register(
+        req.body.email,
+        req.body.password
+      );
+
+      return reply.send(user);
+    }
+  );
+
+
+  app.post('/login', {
+    schema: {
+      body: loginSchema,
+      response: {
+        200: loginResponseSchema,
+      },
+    },
+    handler: async (req) => {
       const { email, password } = req.body;
-
-      const passwordHash = createHash('sha256')
-        .update(password)
-        .digest('hex');
-
-      try {
-        const user = await authService.register(email, passwordHash);
-        return reply.code(201).send(user);
-      } catch (e) {
-        if ((e as Error).message === 'USER_ALREADY_EXISTS') {
-          return reply.code(409).send({
-            message: 'User already exists',
-          });
-        }
-        throw e;
-      }
-    });
+      
+      return service.login(email, password);
+    },
+  });
 }
 

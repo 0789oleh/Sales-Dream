@@ -2,17 +2,20 @@ import { db } from '../../db/client';
 import { users } from '../../db/schema';
 import { eq } from 'drizzle-orm';
 import { randomUUID } from 'crypto';
-import { userResponseSchema } from './auth.schemas';
+import { loginResponseSchema, userResponseSchema } from './auth.schemas';
+import { verify } from 'argon2';
+import { AuthError } from '../errors/auth.errors';
 
 export class AuthService {
+  constructor(private jwtService: any){};
+
   async register(email: string, passwordHash: string) {
     // 1. Проверяем, существует ли пользователь
-    const existing = await db.query.users.findFirst({
-      where: eq(users.email, email),
-    });
+    const existing = await this.findByEmail(email);
+
 
     if (existing) {
-      throw new Error('USER_ALREADY_EXISTS');
+      throw new AuthError('USER_ALREADY_EXISTS');
     }
 
     // 2. Создаём пользователя
@@ -28,6 +31,34 @@ export class AuthService {
     // 3. Возвращаем public DTO
     return userResponseSchema.parse(user);
   }
+
+  async login(email: string, password: string) {
+    const user = await this.findByEmail(email);
+
+    if (!user) {
+      throw new AuthError('INVALID_CREDENTIALS');
+    }
+
+    const isValidPassword = await verify(user.passwordHash, password);
+
+    if (!isValidPassword) {
+      throw new AuthError('INVALID_CREDENTIALS');
+    }
+
+    if (!user.isActive) {
+      throw new AuthError('USER_INACTIVE');
+    }
+
+    return loginResponseSchema.parse({
+      accessToken: this.jwtService.sign({
+        sub: user.id,
+        email: user.email,
+      }),
+      tokenType: 'Bearer',
+      expiresIn: 900,
+    });
+  }
+
 
   async findByEmail(email: string) {
     return db.query.users.findFirst({

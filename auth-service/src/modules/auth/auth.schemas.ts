@@ -21,6 +21,8 @@ export const loginSchema = z.object({
 
 export const loginResponseSchema = z.object({
   accessToken: z.string(),
+  tokenType: z.literal('Bearer'),
+  expiresIn: z.number().int().positive()
 });
 
 export const meResponseSchema = userResponseSchema;
