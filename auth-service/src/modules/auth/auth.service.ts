@@ -1,5 +1,5 @@
 import { db } from '../../db/client';
-import { users } from '../../db/schema';
+import { sessions, users } from '../../db/schema';
 import { eq } from 'drizzle-orm';
 import { randomUUID } from 'crypto';
 import { registerSchema, loginSchema, loginResponseSchema, meResponseSchema, userResponseSchema } from './auth.schemas';
@@ -59,8 +59,6 @@ export class AuthService {
     });
 
     await db.insert(sessions).values(sessionData);
-
-
 
     return loginResponseSchema.parse({
       accessToken: this.jwtService.sign({

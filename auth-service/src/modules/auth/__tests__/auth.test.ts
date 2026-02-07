@@ -1,13 +1,15 @@
-import { describe, it, expect, beforeAll } from 'vitest';
+import { describe, it, expect, beforeAll, beforeEach } from 'vitest';
 import { AuthService } from '../auth.service';
-import { registerSchema, loginSchema, loginResponseSchema, meResponseSchema } from '../auth.schemas';
 import { db } from '../../../db/client';
-import 
+import { sessions, users } from '../../../db/schema';
+import { AuthError } from '../../errors/auth.errors';
 
 describe('AuthService.login', () => {
   let service: AuthService;
 
-  beforeAll(() => {
+  beforeEach(async () => {
+    await db.delete(sessions);
+    await db.delete(users);
     service = new AuthService(db);
   });
 
@@ -19,29 +21,23 @@ describe('AuthService.login', () => {
     });
 
     // act
-    const result = await service.login(
-      'unit@test.com',
-      '12345678'
-    );
+    const result = await service.login({
+      email: 'unit@test.com',
+     password: '12345678',
+    });
 
     // assert
     expect(result.accessToken).toBeDefined();
     expect(result.tokenType).toBe('Bearer');
     expect(result.expiresIn).toBeGreaterThan(0);
+  });  
+
+  it('throws INVALID_CREDENTIALS for wrong password', async () => {
+    await service.register({ email: 'a@a.com', password: '12345678' });
+
+    await expect(
+      service.login({ email: 'a@a.com', password: 'wrongpass' })
+    ).rejects.toThrow(AuthError);
   });
 
-  async getMe(userId: string) {
-  const user = await this.findById(userId);
-
-  if (!user) {
-    throw new AuthError('USER_NOT_FOUND');
-  }
-
-  if (!user.isActive) {
-    throw new AuthError('USER_INACTIVE');
-  }
-
-  return meResponseSchema.parse(user);
-}
-  
 });
