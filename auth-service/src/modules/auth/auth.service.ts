@@ -2,44 +2,46 @@ import { db } from '../../db/client';
 import { users } from '../../db/schema';
 import { eq } from 'drizzle-orm';
 import { randomUUID } from 'crypto';
-import { loginResponseSchema, meResponseSchema, userResponseSchema } from './auth.schemas';
+import { registerSchema, loginSchema, loginResponseSchema, meResponseSchema, userResponseSchema } from './auth.schemas';
 import { verify } from 'argon2';
 import { AuthError } from '../errors/auth.errors';
+import z from 'zod';
+import { sessionInsertSchema, userInsertSchema } from '../../db/zod';
 
 export class AuthService {
   constructor(private jwtService: any){};
 
-  async register(email: string, passwordHash: string) {
-    // 1. Проверяем, существует ли пользователь
-    const existing = await this.findByEmail(email);
-
-
+  async register(register: registerSchema) {
+    const existing = await this.findByEmail(register.email);
     if (existing) {
       throw new AuthError('USER_ALREADY_EXISTS');
     }
 
-    // 2. Создаём пользователя
+    const passwordHash = await hashPassword(register.password);
+
+    const data = userInsertSchema.parse({
+      id: randomUUID(),
+      email: register.email,
+      passwordHash,
+    });
+
     const [user] = await db
       .insert(users)
-      .values({
-        id: randomUUID(),
-        email,
-        passwordHash,
-      })
+      .values(data)
       .returning();
 
-    // 3. Возвращаем public DTO
     return userResponseSchema.parse(user);
   }
 
-  async login(email: string, password: string) {
-    const user = await this.findByEmail(email);
+
+  async login(login: loginSchema) {
+    const user = await this.findByEmail(login.email);
 
     if (!user) {
       throw new AuthError('INVALID_CREDENTIALS');
     }
 
-    const isValidPassword = await verify(user.passwordHash, password);
+    const isValidPassword = await verify(user.passwordHash, login.password);
 
     if (!isValidPassword) {
       throw new AuthError('INVALID_CREDENTIALS');
@@ -48,6 +50,17 @@ export class AuthService {
     if (!user.isActive) {
       throw new AuthError('USER_INACTIVE');
     }
+
+    const sessionData = sessionInsertSchema.parse({
+      id: randomUUID(),
+      userId: user.id,
+      refreshToken: randomUUID(), // или jwt
+      expiresAt: addDays(new Date(), 7),
+    });
+
+    await db.insert(sessions).values(sessionData);
+
+
 
     return loginResponseSchema.parse({
       accessToken: this.jwtService.sign({

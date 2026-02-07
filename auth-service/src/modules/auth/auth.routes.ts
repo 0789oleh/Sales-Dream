@@ -1,4 +1,4 @@
-import fastify, { FastifyInstance } from 'fastify';
+import { FastifyInstance } from 'fastify';
 import { AuthService } from './auth.service';
 import {
   registerSchema,
@@ -30,7 +30,6 @@ export async function authRoutes(app: FastifyInstance) {
       return reply.send(user);
     }
   );
-
 
   app.post('/login', {
     schema: {
