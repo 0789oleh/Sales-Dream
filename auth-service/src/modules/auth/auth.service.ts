@@ -1,4 +1,3 @@
-import { db } from '../../db/client';
 import { sessions, users } from '../../db/schema';
 import { eq } from 'drizzle-orm';
 import { randomUUID } from 'crypto';
@@ -7,9 +6,13 @@ import { verify } from 'argon2';
 import { AuthError } from '../errors/auth.errors';
 import z from 'zod';
 import { sessionInsertSchema, userInsertSchema } from '../../db/zod';
+import { addDays } from 'date-fns';
 
 export class AuthService {
-  constructor(private jwtService: any){};
+  constructor(
+    private readonly db: typeof import('../../db/client').db,
+    private readonly jwtService: any,
+  ) {}
 
   async register(register: registerSchema) {
     const existing = await this.findByEmail(register.email);
@@ -25,7 +28,7 @@ export class AuthService {
       passwordHash,
     });
 
-    const [user] = await db
+    const [user] = await this.db
       .insert(users)
       .values(data)
       .returning();
@@ -58,7 +61,7 @@ export class AuthService {
       expiresAt: addDays(new Date(), 7),
     });
 
-    await db.insert(sessions).values(sessionData);
+    await this.db.insert(sessions).values(sessionData);
 
     return loginResponseSchema.parse({
       accessToken: this.jwtService.sign({
@@ -87,13 +90,13 @@ export class AuthService {
 
 
   findById(userId: string) {
-    return db.query.users.findFirst({
+    return this.db.query.users.findFirst({
       where: eq(users.id, userId),
     });
   }
 
   async findByEmail(email: string) {
-    return db.query.users.findFirst({
+    return this.db.query.users.findFirst({
       where: eq(users.email, email),
     });
   }
