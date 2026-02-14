@@ -2,7 +2,7 @@ import { sessions, users } from '../../db/schema';
 import { eq } from 'drizzle-orm';
 import { randomUUID } from 'crypto';
 import { registerSchema, loginSchema, loginResponseSchema, meResponseSchema, userResponseSchema } from './auth.schemas';
-import { verify } from 'argon2';
+import { verify, hash } from 'argon2';
 import { AuthError } from '../errors/auth.errors';
 import z from 'zod';
 import { sessionInsertSchema, userInsertSchema } from '../../db/zod';
@@ -20,7 +20,7 @@ export class AuthService {
       throw new AuthError('USER_ALREADY_EXISTS');
     }
 
-    const passwordHash = await hashPassword(register.password);
+    const passwordHash = await this.hashPassword(register.password);
 
     const data = userInsertSchema.parse({
       id: randomUUID(),
@@ -100,4 +100,10 @@ export class AuthService {
       where: eq(users.email, email),
     });
   }
+
+  async hashPassword(password: string): Promise<string> {
+    const hashed = await hash(password);
+    return hashed;
+  }
+
 }

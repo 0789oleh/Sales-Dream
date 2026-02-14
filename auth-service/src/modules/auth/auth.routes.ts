@@ -6,9 +6,10 @@ import {
   loginSchema,
   loginResponseSchema,
 } from './auth.schemas';
+import { db } from '../../db/client';
 
 export async function authRoutes(app: FastifyInstance) {
-  const service = new AuthService(app.jwt);
+  const service = new AuthService(db, app.jwt);
 
   app.post(
   '/register',
