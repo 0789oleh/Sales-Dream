@@ -23,10 +23,7 @@ export async function authRoutes(app: FastifyInstance) {
     },
   
     async (req, reply) => {
-      const user = await service.register(
-        req.body.email,
-        req.body.password
-      );
+      const user = await service.register(registerSchema.parse(req.body)); 
 
       return reply.send(user);
     }
@@ -40,9 +37,9 @@ export async function authRoutes(app: FastifyInstance) {
       },
     },
     handler: async (req) => {
-      const { email, password } = req.body;
+      const { email, password } = loginSchema.parse(req.body);
       
-      return service.login(email, password);
+      return service.login(loginSchema.parse({ email, password }));
     },
   });
 
